@@ -1,7 +1,8 @@
 // TODO: hide rkyv from lib use
+pub mod network;
 use rkyv::{Archive, Deserialize, Serialize};
 
-#[derive(Archive, Deserialize, Serialize, Debug, PartialEq)]
+#[derive(Archive, Deserialize, Serialize, Debug, PartialEq, Default, Clone)]
 pub struct Vec2 {
     pub x: f32,
     pub y: f32,
@@ -18,7 +19,7 @@ pub struct ClientMessage {
     pub command: Command,
 }
 
-#[derive(Archive, Deserialize, Serialize, Debug, PartialEq)]
+#[derive(Archive, Deserialize, Serialize, Debug, PartialEq, Clone)]
 pub struct Entity {
     pub position: Vec2,
     pub velocity: Vec2,
@@ -26,13 +27,12 @@ pub struct Entity {
     pub team: usize,
 }
 
-#[derive(Archive, Deserialize, Serialize, Debug, PartialEq)]
+#[derive(Archive, Deserialize, Serialize, Debug, PartialEq, Clone)]
 pub struct World {
     pub entities: Vec<Entity>,
-    pub bullets: Vec<Entity>,
 }
 
-#[derive(Archive, Deserialize, Serialize, Debug, PartialEq)]
+#[derive(Archive, Deserialize, Serialize, Debug, PartialEq, Clone)]
 pub struct ServerMessage {
     pub world: World,
 }
