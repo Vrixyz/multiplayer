@@ -1,11 +1,6 @@
-use bevy::prelude::*;
+use bevy::{math::Vec2, prelude::*};
 use multiplayer_plugin::client::*;
-use shared::{ClientMessage, Command, Vec2};
-
-#[derive(Debug)]
-struct Unit {
-    id: usize,
-}
+use shared::{ClientMessage, Command, Id};
 
 struct UnitMaterial {
     pub mat: Handle<ColorMaterial>,
@@ -17,7 +12,8 @@ fn main() {
         .add_plugin(MultiplayerClientPlugin)
         .add_startup_system(init_assets.system())
         .add_system(handle_messages.system())
-        .add_system(send_clicks.system())
+        .add_system(input_aim_system.system())
+        .add_system(input_move_system.system())
         //.add_system(display_world.system())
         .run();
 }
@@ -34,38 +30,76 @@ fn init_assets(
         .insert(MainCamera);
 }
 
-fn send_clicks(
-    mut input: EventReader<CursorMoved>,
+fn input_aim_system(
+    window: Res<Windows>,
     mut messages_to_send: ResMut<MessagesToSend>,
+    mouse_button_input: Res<Input<MouseButton>>,
+    mut ev_cursor: EventReader<CursorMoved>,
     q_camera: Query<&Transform, With<MainCamera>>,
-    wnds: Res<Windows>,
 ) {
-    let pos = match input.iter().last() {
-        None => return,
-        Some(pos) => {
-            // From https://bevy-cheatbook.github.io/cookbook/cursor2world.html?highlight=world#2d-games
-            let wnd = wnds.get(pos.id).unwrap();
-            let size = bevy::math::Vec2::new(wnd.width() as f32, wnd.height() as f32);
-            let p = pos.position - size / 2.0;
-            let camera_transform = q_camera.iter().next().unwrap();
-            let pos_wld = camera_transform.compute_matrix() * p.extend(0.0).extend(1.0);
-            Vec2 {
-                x: pos_wld.x,
-                y: pos_wld.y,
-            }
-        }
-    };
+    if let Some(pos) = ev_cursor.iter().last() {
+        let camera_transform = q_camera.iter().next().unwrap();
+        let wnd = window.get(pos.id).unwrap();
+        let size = Vec2::new(wnd.width() as f32, wnd.height() as f32);
 
-    let value = ClientMessage {
-        command: Command::Move(pos),
-    };
-    messages_to_send.push(value);
+        // the default orthographic projection is in pixels from the center;
+        // just undo the translation
+        let p = pos.position - size / 2.0;
+
+        // apply the camera transform
+        let pos_wld = camera_transform.compute_matrix() * p.extend(0.0).extend(1.0);
+
+        if mouse_button_input.pressed(MouseButton::Left) {
+            messages_to_send.push(ClientMessage {
+                command: Command::Shoot(shared::Vec2 {
+                    x: pos_wld.x,
+                    y: pos_wld.y,
+                }),
+            });
+        } else {
+            messages_to_send.push(ClientMessage {
+                command: Command::Aim(shared::Vec2 {
+                    x: pos_wld.x,
+                    y: pos_wld.y,
+                }),
+            });
+        }
+    }
+}
+
+pub fn input_move_system(
+    mut messages_to_send: ResMut<MessagesToSend>,
+    keyboard_input: Res<Input<KeyCode>>,
+) {
+    if keyboard_input.is_changed() {
+        let mut movement = Vec2::splat(0.0);
+        if keyboard_input.pressed(KeyCode::Z) {
+            movement += Vec2::Y;
+        }
+        if keyboard_input.pressed(KeyCode::S) {
+            movement += -Vec2::Y;
+        }
+        if keyboard_input.pressed(KeyCode::D) {
+            movement += Vec2::X;
+        }
+        if keyboard_input.pressed(KeyCode::Q) {
+            movement += -Vec2::X;
+        }
+        movement = movement.normalize();
+        let movement = shared::Vec2 {
+            x: movement.x,
+            y: movement.y,
+        };
+        messages_to_send.push(ClientMessage {
+            command: Command::MoveDirection(movement),
+        });
+    }
 }
 
 fn handle_messages(
     mut commands: Commands,
     mut messages_to_read: ResMut<MessagesToRead>,
-    mut query: Query<(Entity, &mut Transform, &mut Unit)>,
+    mut query: Query<(Entity, &mut Transform, &mut Id)>,
     assets: Res<UnitMaterial>,
 ) {
     match messages_to_read.pop() {
@@ -77,24 +111,24 @@ fn handle_messages(
                     .world
                     .entities
                     .iter()
-                    .position(|to_update| to_update.id == u.2.id)
+                    .position(|to_update| to_update.id == u.2 .0)
                 {
                     let updated_value = &m.world.entities[pos_updated_value];
                     u.1.translation.x = updated_value.position.x;
                     u.1.translation.y = updated_value.position.y;
-                    dbg!(u);
                     updated_units.push(pos_updated_value);
                 } else {
-                    commands.entity(dbg!(u.0)).despawn();
+                    commands.entity(u.0).despawn();
                 }
             }
             m.world.entities.retain(|e| !updated_units.contains(&e.id));
             for new_entity in m.world.entities {
                 commands
                     .spawn()
-                    .insert(dbg!(Unit { id: new_entity.id }))
+                    .insert(dbg!(Id(new_entity.id)))
                     .insert_bundle(SpriteBundle {
                         material: assets.mat.clone(),
+                        sprite: Sprite::new(Vec2::splat(64.0)),
                         ..Default::default()
                     })
                     .insert(Transform::from_translation(Vec3::new(

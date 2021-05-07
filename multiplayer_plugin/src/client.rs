@@ -45,7 +45,7 @@ impl Plugin for MultiplayerClientPlugin {
         };
 
         let value = ClientMessage {
-            command: Command::Move(Vec2 { x: 0.0, y: 10.0 }),
+            command: Command::MoveDirection(Vec2 { x: 0.0, y: 10.0 }),
         };
         com.send(&value);
 

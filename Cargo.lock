@@ -482,6 +482,15 @@ dependencies = [
 ]
 
 [[package]]
+name = "bevy_prototype_debug_lines"
+version = "0.3.1"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "38dd1765929d2ea3be5f6140ef028ef1487a5450eedb1b790ca1182772bc1f63"
+dependencies = [
+ "bevy",
+]
+
+[[package]]
 name = "bevy_reflect"
 version = "0.5.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -1975,6 +1984,15 @@ dependencies = [
 ]
 
 [[package]]
+name = "logic_plugin"
+version = "0.1.0"
+dependencies = [
+ "bevy",
+ "bevy_prototype_debug_lines",
+ "shared",
+]
+
+[[package]]
 name = "mach"
 version = "0.2.3"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -2841,6 +2859,7 @@ name = "server"
 version = "0.1.0"
 dependencies = [
  "bevy",
+ "logic_plugin",
  "multiplayer_plugin",
  "shared",
 ]

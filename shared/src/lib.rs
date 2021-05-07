@@ -1,4 +1,3 @@
-// TODO: hide rkyv from lib use
 pub mod network;
 use rkyv::{Archive, Deserialize, Serialize};
 
@@ -10,8 +9,9 @@ pub struct Vec2 {
 
 #[derive(Archive, Deserialize, Serialize, Debug, PartialEq)]
 pub enum Command {
-    Move(Vec2),
+    MoveDirection(Vec2),
     Shoot(Vec2),
+    Aim(Vec2),
 }
 
 #[derive(Archive, Deserialize, Serialize, Debug, PartialEq)]
@@ -36,3 +36,6 @@ pub struct World {
 pub struct ServerMessage {
     pub world: World,
 }
+
+#[derive(Debug)]
+pub struct Id(pub usize);
