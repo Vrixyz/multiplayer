@@ -81,11 +81,7 @@ fn handle_messages(
 ) {
     while let Some((c, m)) = messages_to_read.pop() {
         if let Some(mut unit) = units.iter_mut().find(|u| u.1.client_id == c.id) {
-            if let Some(mut shooter) = unit.2.take() {
-                apply_command(&m.command, &mut unit.0, &mut Some(&mut shooter));
-            } else {
-                apply_command(&m.command, &mut unit.0, &mut None);
-            }
+            apply_command(&m.command, &mut unit.0, &mut unit.2.as_deref_mut());
         } else {
             let transform = Transform::default();
             let steering_manager = SteeringManager {

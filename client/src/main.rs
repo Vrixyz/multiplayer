@@ -85,7 +85,7 @@ pub fn input_move_system(
         if keyboard_input.pressed(KeyCode::Q) {
             movement += -Vec2::X;
         }
-        movement = movement.normalize();
+        movement = movement.normalize_or_zero();
         let movement = shared::Vec2 {
             x: movement.x,
             y: movement.y,
@@ -102,6 +102,7 @@ fn handle_messages(
     mut query: Query<(Entity, &mut Transform, &mut Id)>,
     assets: Res<UnitMaterial>,
 ) {
+    dbg!("handle_messages");
     match messages_to_read.pop() {
         None => return,
         Some(mut m) => {
@@ -114,9 +115,15 @@ fn handle_messages(
                     .position(|to_update| to_update.id == u.2 .0)
                 {
                     let updated_value = &m.world.entities[pos_updated_value];
+                    dbg!(
+                        "entity {} to {};{}",
+                        updated_value.id,
+                        updated_value.position.x,
+                        updated_value.position.y,
+                    );
                     u.1.translation.x = updated_value.position.x;
                     u.1.translation.y = updated_value.position.y;
-                    updated_units.push(pos_updated_value);
+                    updated_units.push(updated_value.id);
                 } else {
                     commands.entity(u.0).despawn();
                 }
@@ -139,4 +146,5 @@ fn handle_messages(
             }
         }
     }
+    dbg!("end handle_messages");
 }

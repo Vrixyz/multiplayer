@@ -3,17 +3,15 @@ use std::{
         hash_map::Entry::{Occupied, Vacant},
         HashMap,
     },
+    convert::TryInto,
     net::UdpSocket,
 };
 use std::{hash::Hash, net::SocketAddr};
 
+use rmp_serde::Serializer;
+use serde::Serialize;
+
 use super::super::{ClientMessage, ServerMessage};
-use rkyv::{
-    archived_root,
-    de::deserializers::AllocDeserializer,
-    ser::{serializers::AlignedSerializer, Serializer},
-    AlignedVec, Deserialize,
-};
 
 #[derive(Clone, Debug)]
 pub struct Client {
@@ -47,9 +45,9 @@ impl ComServer {
     }
 
     pub fn receive(&mut self) -> std::io::Result<(Client, ClientMessage)> {
-        let mut buf = [0; 256];
+        let mut buf = [0; 1056];
         let (amt, src) = self.socket.recv_from(&mut buf)?;
-
+        dbg!("received: {}", amt);
         let client = match self.clients.entry(src) {
             Occupied(e) => e.get().clone(),
             Vacant(e) => {
@@ -65,25 +63,18 @@ impl ComServer {
         };
         // Redeclare `buf` as slice of the received data and send reverse data back to origin.
         let buf = &mut buf[..amt];
-        let archived = unsafe { archived_root::<ClientMessage>(buf) };
-
-        let mut deserializer = AllocDeserializer;
-        let deserialized = archived
-            .deserialize(&mut deserializer)
-            .expect("failed to deserialize value");
+        let deserialized = rmp_serde::from_read_ref(&buf).expect("failed to deserialize value");
         Ok((client, deserialized))
     }
 
     pub fn send(&self, client: &Client, message: &ServerMessage) -> std::io::Result<()> {
-        let mut serializer = AlignedSerializer::new(AlignedVec::new());
-        serializer
-            .serialize_value(message)
-            .expect("failed to serialize value");
-
-        let buf = serializer.into_inner();
+        let mut buf = Vec::new();
+        message
+            .serialize(&mut Serializer::new(&mut buf))
+            .expect("Failed to serialize data");
 
         self.socket
-            .send_to(&*buf, client.socker_addr)
+            .send_to(buf.as_slice(), client.socker_addr)
             .expect("couldn't send message");
         Ok(())
     }

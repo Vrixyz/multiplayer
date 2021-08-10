@@ -61,7 +61,13 @@ fn receive_messages(
     mut com_to_read: ResMut<ComClient>,
     mut messages_to_read: ResMut<MessagesToRead>,
 ) {
-    while let Ok(msg) = com_to_read.receive() {
+    while let Some(msg) = match com_to_read.receive() {
+        Ok(msg) => Some(msg),
+        Err(err) => {
+            dbg!("error: {}", err);
+            return;
+        }
+    } {
         messages_to_read.messages.push_back(msg);
     }
 }

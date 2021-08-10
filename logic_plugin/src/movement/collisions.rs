@@ -61,7 +61,7 @@ pub(super) fn collisions_death(
     let mut first_check = 1;
     for (e1, t1, s1, team1, def1, kill1) in collision_checks.q0().iter() {
         for (e2, t2, s2, team2, def2, kill2) in collision_checks.q1().iter().skip(first_check) {
-            if team1 == team2 {
+            if team1.id == team2.id {
                 continue;
             }
             let distance = t1.translation.distance(t2.translation);
