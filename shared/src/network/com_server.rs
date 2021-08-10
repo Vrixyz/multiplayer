@@ -1,17 +1,14 @@
+use std::net::SocketAddr;
 use std::{
     collections::{
         hash_map::Entry::{Occupied, Vacant},
         HashMap,
     },
-    convert::TryInto,
     net::UdpSocket,
 };
-use std::{hash::Hash, net::SocketAddr};
 
 use rmp_serde::Serializer;
-use serde::Serialize;
-
-use super::super::{ClientMessage, ServerMessage};
+use serde::{de::DeserializeOwned, Serialize};
 
 #[derive(Clone, Debug)]
 pub struct Client {
@@ -44,7 +41,7 @@ impl ComServer {
         }
     }
 
-    pub fn receive(&mut self) -> std::io::Result<(Client, ClientMessage)> {
+    pub fn receive<T: DeserializeOwned>(&mut self) -> std::io::Result<(Client, T)> {
         let mut buf = [0; 1056];
         let (amt, src) = self.socket.recv_from(&mut buf)?;
         dbg!("received: {}", amt);
@@ -67,7 +64,7 @@ impl ComServer {
         Ok((client, deserialized))
     }
 
-    pub fn send(&self, client: &Client, message: &ServerMessage) -> std::io::Result<()> {
+    pub fn send<T: Serialize>(&self, client: &Client, message: &T) -> std::io::Result<()> {
         let mut buf = Vec::new();
         message
             .serialize(&mut Serializer::new(&mut buf))

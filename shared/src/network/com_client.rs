@@ -1,11 +1,7 @@
 use std::net::UdpSocket;
 
 use rmp_serde::Serializer;
-use serde::Serialize;
-
-use crate::ClientMessage;
-
-use super::super::ServerMessage;
+use serde::{de::DeserializeOwned, Serialize};
 
 pub struct ComClient {
     socket: UdpSocket,
@@ -24,7 +20,7 @@ impl ComClient {
         Ok(Self { socket })
     }
 
-    pub fn receive(&mut self) -> std::io::Result<ServerMessage> {
+    pub fn receive<T: DeserializeOwned>(&mut self) -> std::io::Result<T> {
         let mut buf = [0; 1026];
         let (amt, src) = self.socket.recv_from(&mut buf)?;
         dbg!(amt);
@@ -34,7 +30,7 @@ impl ComClient {
         Ok(deserialized)
     }
 
-    pub fn send(&self, message: &ClientMessage) -> std::io::Result<()> {
+    pub fn send<T: Serialize>(&self, message: &T) -> std::io::Result<()> {
         let mut buf = Vec::new();
 
         message

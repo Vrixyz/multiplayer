@@ -115,12 +115,12 @@ fn handle_messages(
                     .position(|to_update| to_update.id == u.2 .0)
                 {
                     let updated_value = &m.world.entities[pos_updated_value];
-                    dbg!(
+                    /*dbg!(
                         "entity {} to {};{}",
                         updated_value.id,
                         updated_value.position.x,
                         updated_value.position.y,
-                    );
+                    );*/
                     u.1.translation.x = updated_value.position.x;
                     u.1.translation.y = updated_value.position.y;
                     updated_units.push(updated_value.id);
@@ -135,7 +135,7 @@ fn handle_messages(
                     .insert(dbg!(Id(new_entity.id)))
                     .insert_bundle(SpriteBundle {
                         material: assets.mat.clone(),
-                        sprite: Sprite::new(Vec2::splat(64.0)),
+                        sprite: Sprite::new(Vec2::splat(new_entity.size * 2f32)),
                         ..Default::default()
                     })
                     .insert(Transform::from_translation(Vec3::new(

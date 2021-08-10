@@ -5,6 +5,8 @@ use crate::{
     *,
 };
 
+use super::destroy_after::DelayedDestroy;
+
 pub struct Bullet;
 
 #[derive(Clone, PartialEq)]
@@ -38,10 +40,10 @@ pub(super) fn shoot_apply(
     mut id_provider: ResMut<IdProvider>,
     mut attacker: Query<(&Transform, &Shooter, &Team, &mut ShootAbility)>,
 ) {
+    let time_since_startup = time.time_since_startup().as_secs_f32();
     for (transform, shooter, team, mut attack) in attacker.iter_mut() {
         match shooter.mode {
             ShooterMode::Shoot(target) => {
-                let time_since_startup = time.time_since_startup().as_secs_f32();
                 if attack.last_attack + attack.cooldown < time_since_startup {
                     attack.last_attack = time_since_startup;
                     let position = transform.translation;
@@ -56,8 +58,11 @@ pub(super) fn shoot_apply(
                         })
                         .insert(CollisionKill)
                         .insert(Shape { radius: 16. })
+                        .insert(DelayedDestroy {
+                            time_to_destroy: time_since_startup + 0.5f32,
+                        })
                         .insert(Velocity(
-                            (target - position.into()).normalize_or_zero() * 400.0,
+                            (target - position.into()).normalize_or_zero() * 1000.0,
                         ));
                 }
             }

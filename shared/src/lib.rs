@@ -22,7 +22,7 @@ pub struct ClientMessage {
 #[derive(Deserialize, Serialize, Debug, PartialEq, Clone)]
 pub struct Entity {
     pub position: Vec2,
-    pub velocity: Vec2,
+    pub size: f32,
     pub id: usize,
     pub team: usize,
 }

@@ -15,6 +15,8 @@ use multiplayer_plugin::server::*;
 use shared::{network::com_server::ComServer, Id, ServerMessage};
 use std::time::Duration;
 
+const BULLET_SIZE: f32 = 16_f32;
+
 struct Unit {
     pub client_id: usize,
 }
@@ -37,17 +39,17 @@ fn main() {
 fn send_update(
     mut messages_to_send: ResMut<MessagesToSend>,
     com: ResMut<ComServer>,
-    units: Query<(&shared::Id, &Transform, &Team, &Unit)>,
+    units: Query<(&shared::Id, &Transform, &Team, &Unit, &Shape)>,
     bullets: Query<(&shared::Id, &Transform, &Team, &Bullet)>,
 ) {
     let mut world = shared::World { entities: vec![] };
-    for (id, transform, team, _) in units.iter() {
+    for (id, transform, team, _, shape) in units.iter() {
         world.entities.push(shared::Entity {
             position: shared::Vec2 {
                 x: transform.translation.x,
                 y: transform.translation.y,
             },
-            velocity: shared::Vec2::default(),
+            size: shape.radius,
             id: id.0 as usize,
             team: team.id,
         })
@@ -58,7 +60,7 @@ fn send_update(
                 x: transform.translation.x,
                 y: transform.translation.y,
             },
-            velocity: shared::Vec2::default(),
+            size: BULLET_SIZE,
             id: e.0 as usize,
             team: team.id,
         })
@@ -99,7 +101,7 @@ fn handle_messages(
                 .spawn()
                 .insert(Id(id_provider.new_id()))
                 .insert(transform)
-                .insert(Shape { radius: 32.0 })
+                .insert(Shape { radius: 32f32 })
                 .insert(CollisionDef {
                     behaviour: CollisionBehaviour::DieVersusKill,
                 })
@@ -108,7 +110,7 @@ fn handle_messages(
                 .insert(steering_manager)
                 .insert(Team { id: c.id })
                 .insert(shooter)
-                .insert(ShootAbility::new(1.0))
+                .insert(ShootAbility::new(0.1))
                 .insert(unit);
         };
     }
