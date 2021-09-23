@@ -51,6 +51,9 @@ pub(super) fn shoot_apply(
                 if attack.last_attack + attack.cooldown < time_since_startup {
                     attack.last_attack = time_since_startup;
                     let position = position.position.translation;
+                    if position.vector.x == 0.0 && position.vector.y == 0.0 {
+                        println!("shoot from 0;0");
+                    }
                     spawn_bullet(
                         position.into(),
                         (target - position.into()).normalize_or_zero() * 50.0,

@@ -52,15 +52,15 @@ fn input_aim_system(
         if mouse_button_input.pressed(MouseButton::Left) {
             messages_to_send.push(ClientMessage {
                 command: Command::Shoot(shared::Vec2 {
-                    x: pos_wld.x,
-                    y: pos_wld.y,
+                    x: pos_wld.x / 32.0,
+                    y: pos_wld.y / 32.0,
                 }),
             });
         } else {
             messages_to_send.push(ClientMessage {
                 command: Command::Aim(shared::Vec2 {
-                    x: pos_wld.x,
-                    y: pos_wld.y,
+                    x: pos_wld.x / 32.0,
+                    y: pos_wld.y / 32.0,
                 }),
             });
         }
@@ -102,7 +102,6 @@ fn handle_messages(
     mut query: Query<(Entity, &mut Transform, &mut Id)>,
     assets: Res<UnitMaterial>,
 ) {
-    dbg!("handle_messages");
     match messages_to_read.pop() {
         None => return,
         Some(mut m) => {
@@ -115,14 +114,9 @@ fn handle_messages(
                     .position(|to_update| to_update.id == u.2 .0)
                 {
                     let updated_value = &m.world.entities[pos_updated_value];
-                    /*dbg!(
-                        "entity {} to {};{}",
-                        updated_value.id,
-                        updated_value.position.x,
-                        updated_value.position.y,
-                    );*/
-                    u.1.translation.x = updated_value.position.x;
-                    u.1.translation.y = updated_value.position.y;
+
+                    u.1.translation.x = updated_value.position.x * 32.0;
+                    u.1.translation.y = updated_value.position.y * 32.0;
                     updated_units.push(updated_value.id);
                 } else {
                     commands.entity(u.0).despawn();
@@ -130,21 +124,24 @@ fn handle_messages(
             }
             m.world.entities.retain(|e| !updated_units.contains(&e.id));
             for new_entity in m.world.entities {
+                println!(
+                    "new entity {} to {};{}",
+                    new_entity.id, new_entity.position.x, new_entity.position.y,
+                );
                 commands
                     .spawn()
-                    .insert(dbg!(Id(new_entity.id)))
+                    .insert(Id(new_entity.id))
                     .insert_bundle(SpriteBundle {
                         material: assets.mat.clone(),
                         sprite: Sprite::new(Vec2::splat(new_entity.size * 2f32)),
                         ..Default::default()
                     })
                     .insert(Transform::from_translation(Vec3::new(
-                        new_entity.position.x,
-                        new_entity.position.y,
+                        new_entity.position.x * 32.0,
+                        new_entity.position.y * 32.0,
                         0.0,
                     )));
             }
         }
     }
-    dbg!("end handle_messages");
 }

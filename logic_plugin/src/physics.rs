@@ -33,7 +33,7 @@ impl Plugin for PhysicsPlugin {
 
 pub fn setup_physics(mut commands: Commands, mut configuration: ResMut<RapierConfiguration>) {
     configuration.gravity = Vector2::zeros();
-    configuration.scale = 32f32;
+    configuration.scale = 1f32;
 
     /*
      * Ground
@@ -143,12 +143,15 @@ pub fn spawn_bullet<'a, 'b>(
 
     let direction = speed.normalize();
     body.velocity.linvel = speed.into();
-    dbg!(body.velocity.linvel);
     body.mass_properties.flags = RigidBodyMassPropsFlags::ROTATION_LOCKED;
     let spawn_position = origin + direction * 2.0;
     body.position = spawn_position.into();
     let mut ret = commands.spawn();
     ret.insert_bundle(body)
+        .insert(Transform::from_translation(spawn_position.extend(0.0)))
+        .insert(GlobalTransform::from_translation(
+            spawn_position.extend(0.0),
+        ))
         .insert_bundle(ColliderBundle {
             flags: (ActiveEvents::CONTACT_EVENTS).into(),
             position: [0.0, 0.0].into(),

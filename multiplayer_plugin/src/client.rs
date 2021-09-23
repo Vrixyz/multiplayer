@@ -64,7 +64,7 @@ fn receive_messages(
     while let Some(msg) = match com_to_read.receive() {
         Ok(msg) => Some(msg),
         Err(err) => {
-            dbg!("error: {}", err);
+            //dbg!("error: {}", err);
             return;
         }
     } {

@@ -44,7 +44,6 @@ impl ComServer {
     pub fn receive<T: DeserializeOwned>(&mut self) -> std::io::Result<(Client, T)> {
         let mut buf = [0; 1056];
         let (amt, src) = self.socket.recv_from(&mut buf)?;
-        dbg!("received: {}", amt);
         let client = match self.clients.entry(src) {
             Occupied(e) => e.get().clone(),
             Vacant(e) => {

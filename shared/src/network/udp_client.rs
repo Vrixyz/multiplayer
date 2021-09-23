@@ -23,7 +23,6 @@ impl ComClient {
     pub fn receive<T: DeserializeOwned>(&mut self) -> std::io::Result<T> {
         let mut buf = [0; 1026];
         let (amt, src) = self.socket.recv_from(&mut buf)?;
-        dbg!(amt);
         let buf = &mut buf[..amt];
 
         let deserialized = rmp_serde::from_read_ref(&buf).expect("failed to deserialize value");

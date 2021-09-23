@@ -18,8 +18,18 @@ use std::time::Duration;
 
 const BULLET_SIZE: f32 = 16_f32;
 
+#[derive(Debug, Hash, PartialEq, Eq, Clone, StageLabel)]
+pub enum ServerStages {
+    SendUpdates,
+}
+
 fn main() {
     App::build()
+        .add_stage_before(
+            CoreStage::PreUpdate,
+            ServerStages::SendUpdates,
+            SystemStage::parallel(),
+        )
         .add_plugins(MinimalPlugins)
         .insert_resource(ScheduleRunnerSettings::run_loop(Duration::from_secs_f64(
             1.0 / 30.0,
@@ -30,7 +40,7 @@ fn main() {
         .add_plugin(MovementPlugin)
         .add_plugin(AttackPlugin)
         .add_system_to_stage(CoreStage::PreUpdate, handle_messages.system())
-        .add_system_to_stage(CoreStage::PostUpdate, send_update.system())
+        .add_system_to_stage(ServerStages::SendUpdates, send_update.system())
         .run();
 }
 
@@ -57,6 +67,9 @@ fn send_update(
         })
     }
     for (e, transform, team, _) in bullets.iter() {
+        if transform.translation.x == 0.0 && transform.translation.y == 0.0 {
+            println!("position at 0;0");
+        }
         world.entities.push(shared::Entity {
             position: shared::Vec2 {
                 x: transform.translation.x,
