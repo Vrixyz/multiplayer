@@ -9,40 +9,42 @@ use logic_plugin::{
         velocity::Velocity,
         MovementPlugin, SteerDirection, SteeringManager,
     },
-    IdProvider,
+    physics::{create_player, PhysicsPlugin, RapierConfiguration},
+    IdProvider, Unit,
 };
 use multiplayer_plugin::server::*;
-use shared::{network::com_server::ComServer, Id, ServerMessage};
+use shared::{network::udp_server::ComServer, Id, ServerMessage};
 use std::time::Duration;
 
 const BULLET_SIZE: f32 = 16_f32;
-
-struct Unit {
-    pub client_id: usize,
-}
 
 fn main() {
     App::build()
         .add_plugins(MinimalPlugins)
         .insert_resource(ScheduleRunnerSettings::run_loop(Duration::from_secs_f64(
-            1.0 / 50.0,
+            1.0 / 30.0,
         )))
         .insert_resource(IdProvider::default())
         .add_plugin(MultiplayerServerPlugin)
+        .add_plugin(PhysicsPlugin)
         .add_plugin(MovementPlugin)
         .add_plugin(AttackPlugin)
-        .add_system(handle_messages.system())
-        .add_system(send_update.system())
+        .add_system_to_stage(CoreStage::PreUpdate, handle_messages.system())
+        .add_system_to_stage(CoreStage::PostUpdate, send_update.system())
         .run();
 }
 
 fn send_update(
+    rapier_configuration: Res<RapierConfiguration>,
     mut messages_to_send: ResMut<MessagesToSend>,
     com: ResMut<ComServer>,
     units: Query<(&shared::Id, &Transform, &Team, &Unit, &Shape)>,
     bullets: Query<(&shared::Id, &Transform, &Team, &Bullet)>,
 ) {
-    let mut world = shared::World { entities: vec![] };
+    let mut world = shared::World {
+        entities: vec![],
+        scale: rapier_configuration.scale,
+    };
     for (id, transform, team, _, shape) in units.iter() {
         world.entities.push(shared::Entity {
             position: shared::Vec2 {
@@ -85,33 +87,24 @@ fn handle_messages(
         if let Some(mut unit) = units.iter_mut().find(|u| u.1.client_id == c.id) {
             apply_command(&m.command, &mut unit.0, &mut unit.2.as_deref_mut());
         } else {
-            let transform = Transform::default();
             let steering_manager = SteeringManager {
                 steering_target: Vec2::ZERO,
             };
             let mut seeker = SteerDirection {
                 direction: Vec2::ZERO,
             };
-            let unit = Unit { client_id: c.id };
             let mut shooter = Shooter {
                 mode: ShooterMode::Aim(Vec2::ZERO),
             };
             apply_command(&m.command, &mut seeker, &mut Some(&mut shooter));
-            commands
-                .spawn()
-                .insert(Id(id_provider.new_id()))
-                .insert(transform)
-                .insert(Shape { radius: 32f32 })
-                .insert(CollisionDef {
-                    behaviour: CollisionBehaviour::DieVersusKill,
-                })
-                .insert(Velocity(Vec2::default()))
-                .insert(seeker)
-                .insert(steering_manager)
-                .insert(Team { id: c.id })
-                .insert(shooter)
-                .insert(ShootAbility::new(0.1))
-                .insert(unit);
+            create_player(
+                &mut commands,
+                &mut id_provider,
+                seeker,
+                steering_manager,
+                c,
+                shooter,
+            );
         };
     }
 }

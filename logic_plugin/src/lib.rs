@@ -3,6 +3,11 @@ pub use bevy_prototype_debug_lines::DebugLines;
 
 pub mod attack;
 pub mod movement;
+pub mod physics;
+
+pub struct Unit {
+    pub client_id: usize,
+}
 
 #[derive(Default, Debug)]
 pub struct IdProvider {

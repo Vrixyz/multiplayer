@@ -11,4 +11,7 @@ name = "logic_plugin"
 [dependencies]
 shared = { path = "../shared" }
 bevy = "0.5"
+rapier2d = "*"
+bevy_rapier2d = { git = "https://github.com/dimforge/bevy_rapier", branch = "master" }
+# FIXME: this is visualizer and should not be in logic (or as a feature)
 bevy_prototype_debug_lines = "*"

@@ -1,2 +1,2 @@
-pub mod com_client;
-pub mod com_server;
+pub mod udp_client;
+pub mod udp_server;

@@ -13,7 +13,7 @@ use serde::{de::DeserializeOwned, Serialize};
 #[derive(Clone, Debug)]
 pub struct Client {
     pub id: usize,
-    socker_addr: SocketAddr,
+    socket_addr: SocketAddr,
 }
 
 pub struct ComServer {
@@ -51,7 +51,7 @@ impl ComServer {
                 let ret = e
                     .insert(Client {
                         id: self.next_available_id,
-                        socker_addr: src,
+                        socket_addr: src,
                     })
                     .clone();
                 self.next_available_id += 1;
@@ -71,7 +71,7 @@ impl ComServer {
             .expect("Failed to serialize data");
 
         self.socket
-            .send_to(buf.as_slice(), client.socker_addr)
+            .send_to(buf.as_slice(), client.socket_addr)
             .expect("couldn't send message");
         Ok(())
     }

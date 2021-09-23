@@ -11,7 +11,7 @@ fn main() {
         .add_plugins(DefaultPlugins)
         .add_plugin(MultiplayerClientPlugin)
         .add_startup_system(init_assets.system())
-        .add_system(handle_messages.system())
+        .add_system_to_stage(CoreStage::PreUpdate, handle_messages.system())
         .add_system(input_aim_system.system())
         .add_system(input_move_system.system())
         //.add_system(display_world.system())

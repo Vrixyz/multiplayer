@@ -1,6 +1,5 @@
 pub mod network;
 use serde::{Deserialize, Serialize};
-
 #[derive(Deserialize, Serialize, Debug, PartialEq, Default, Clone)]
 pub struct Vec2 {
     pub x: f32,
@@ -30,6 +29,7 @@ pub struct Entity {
 #[derive(Deserialize, Serialize, Debug, PartialEq, Clone)]
 pub struct World {
     pub entities: Vec<Entity>,
+    pub scale: f32,
 }
 
 #[derive(Deserialize, Serialize, Debug, PartialEq, Clone)]

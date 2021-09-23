@@ -14,3 +14,8 @@ impl Plugin for AttackPlugin {
             .add_system(destroy_after::destroy_after.system());
     }
 }
+
+pub struct Health {
+    pub base: f32,
+    pub current: f32,
+}

@@ -2,7 +2,7 @@ use std::collections::VecDeque;
 
 use bevy::prelude::*;
 use shared::{
-    network::com_server::{Client, ComServer},
+    network::udp_server::{Client, ComServer},
     ClientMessage, ServerMessage,
 };
 

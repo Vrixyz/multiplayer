@@ -23,18 +23,6 @@ pub struct CollisionDef {
     pub behaviour: CollisionBehaviour,
 }
 
-pub(super) fn collisions_border(mut collision_checks: Query<(&mut Transform, &Velocity)>) {
-    let bounds_x = (-300., 300.);
-    let bounds_y = (-200., 200.);
-    for (mut t, velocity) in collision_checks.iter_mut() {
-        if t.translation.x < bounds_x.0 || bounds_x.1 < t.translation.x {
-            t.translation.x = t.translation.x.clamp(bounds_x.0, bounds_x.1)
-        }
-        if t.translation.y < bounds_y.0 || bounds_y.1 < t.translation.y {
-            t.translation.y = t.translation.y.clamp(bounds_y.0, bounds_y.1)
-        }
-    }
-}
 pub(super) fn collisions_death(
     mut commands: Commands,
     mut collision_checks: QuerySet<(

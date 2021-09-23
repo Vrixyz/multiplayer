@@ -1,7 +1,7 @@
 use std::collections::VecDeque;
 
 use bevy::prelude::*;
-use shared::{network::com_client::ComClient, ClientMessage, Command, ServerMessage, Vec2};
+use shared::{network::udp_client::ComClient, ClientMessage, Command, ServerMessage, Vec2};
 
 pub struct MultiplayerClientPlugin;
 
