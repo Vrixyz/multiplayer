@@ -2,6 +2,8 @@ use bevy::{math::Vec2, prelude::*};
 use multiplayer_plugin::client::*;
 use shared::{ClientMessage, Command, Id};
 
+mod menu;
+
 struct UnitMaterial {
     pub mat: Handle<ColorMaterial>,
 }
@@ -10,6 +12,7 @@ fn main() {
     App::build()
         .add_plugins(DefaultPlugins)
         .add_plugin(MultiplayerClientPlugin)
+        .add_plugin(menu::MenuPlugin)
         .add_startup_system(init_assets.system())
         .add_system_to_stage(CoreStage::PreUpdate, handle_messages.system())
         .add_system(input_aim_system.system())

@@ -10,3 +10,4 @@ edition = "2018"
 bevy = "0.5"
 shared = { path = "../shared" }
 multiplayer_plugin = { path = "../multiplayer_plugin" }
+bevy_egui = "*"
