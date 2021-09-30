@@ -2,8 +2,9 @@ use bevy::prelude::*;
 use bevy_egui::*;
 
 #[derive(Debug, Clone, Eq, PartialEq, Hash)]
-enum AppState {
+pub enum AppState {
     Menu,
+    Loading,
     InGame,
 }
 
@@ -29,6 +30,7 @@ struct MenuStateRes {
 
 fn menu_ui(
     mut state: ResMut<State<AppState>>,
+    mut state_network: ResMut<State<multiplayer_plugin::client::State>>,
     mut menuRes: ResMut<MenuStateRes>,
     egui_context: Res<EguiContext>,
 ) {
@@ -38,6 +40,9 @@ fn menu_ui(
     egui::CentralPanel::default().show(egui_context.ctx(), |ui| {
         ui.text_edit_singleline(&mut menuRes.ip);
         if ui.button("Play").clicked() {
+            state_network
+                .set(multiplayer_plugin::client::State::On)
+                .unwrap();
             state.set(AppState::InGame).unwrap();
         }
     });

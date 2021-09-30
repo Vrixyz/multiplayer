@@ -5,6 +5,12 @@ use shared::{network::udp_client::ComClient, ClientMessage, Command, ServerMessa
 
 pub struct MultiplayerClientPlugin;
 
+#[derive(Debug, Clone, Eq, PartialEq, Hash)]
+pub enum State {
+    On,
+    Off,
+}
+
 #[derive(Default)]
 pub struct MessagesToSend {
     messages: VecDeque<ClientMessage>,
@@ -28,6 +34,7 @@ impl MessagesToRead {
 }
 impl Plugin for MultiplayerClientPlugin {
     fn build(&self, app: &mut AppBuilder) {
+        // FIXME: should build on startup on "State::On" only or on message received
         let remote_addr = "127.0.0.1:8083";
         let base_addr = "127.0.0.1:".to_string();
         let base_local_port = 34255;
@@ -48,12 +55,16 @@ impl Plugin for MultiplayerClientPlugin {
             command: Command::MoveDirection(Vec2 { x: 0.0, y: 10.0 }),
         };
         com.send(&value);
+        app.add_state(State::Off);
 
         app.insert_resource(com);
         app.insert_resource(MessagesToRead::default());
         app.insert_resource(MessagesToSend::default());
-        app.add_system(receive_messages.system());
-        app.add_system(send_messages.system());
+        app.add_system_set(
+            SystemSet::on_update(State::On)
+                .with_system(receive_messages.system())
+                .with_system(send_messages.system()),
+        );
     }
 }
 
