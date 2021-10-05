@@ -11,3 +11,4 @@ name = "shared"
 [dependencies]
 serde = { version = "*", features = ["derive"] }
 rmp-serde = "*"
+anyhow = "*"

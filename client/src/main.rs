@@ -1,4 +1,5 @@
 use bevy::{math::Vec2, prelude::*};
+use menu::AppState;
 use multiplayer_plugin::client::*;
 use shared::{ClientMessage, Command, Id};
 
@@ -34,12 +35,16 @@ fn init_assets(
 }
 
 fn input_aim_system(
+    mut state: ResMut<bevy::prelude::State<AppState>>,
     window: Res<Windows>,
     mut messages_to_send: ResMut<MessagesToSend>,
     mouse_button_input: Res<Input<MouseButton>>,
     mut ev_cursor: EventReader<CursorMoved>,
     q_camera: Query<&Transform, With<MainCamera>>,
 ) {
+    if state.current() != &AppState::InGame {
+        return;
+    }
     if let Some(pos) = ev_cursor.iter().last() {
         let camera_transform = q_camera.iter().next().unwrap();
         let wnd = window.get(pos.id).unwrap();
@@ -71,9 +76,13 @@ fn input_aim_system(
 }
 
 pub fn input_move_system(
+    mut state: ResMut<bevy::prelude::State<AppState>>,
     mut messages_to_send: ResMut<MessagesToSend>,
     keyboard_input: Res<Input<KeyCode>>,
 ) {
+    if state.current() != &AppState::InGame {
+        return;
+    }
     if keyboard_input.is_changed() {
         let mut movement = Vec2::splat(0.0);
         if keyboard_input.pressed(KeyCode::Z) {

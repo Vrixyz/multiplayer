@@ -1,5 +1,6 @@
 use std::net::UdpSocket;
 
+use anyhow::Result;
 use rmp_serde::Serializer;
 use serde::{de::DeserializeOwned, Serialize};
 
@@ -20,25 +21,21 @@ impl ComClient {
         Ok(Self { socket })
     }
 
-    pub fn receive<T: DeserializeOwned>(&mut self) -> std::io::Result<T> {
+    pub fn receive<T: DeserializeOwned>(&mut self) -> Result<T> {
         let mut buf = [0; 1026];
         let (amt, src) = self.socket.recv_from(&mut buf)?;
         let buf = &mut buf[..amt];
 
-        let deserialized = rmp_serde::from_read_ref(&buf).expect("failed to deserialize value");
+        let deserialized = rmp_serde::from_read_ref(&buf)?;
         Ok(deserialized)
     }
 
-    pub fn send<T: Serialize>(&self, message: &T) -> std::io::Result<()> {
+    pub fn send<T: Serialize>(&self, message: &T) -> Result<()> {
         let mut buf = Vec::new();
 
-        message
-            .serialize(&mut Serializer::new(&mut buf))
-            .expect("Failed to serialize data");
+        message.serialize(&mut Serializer::new(&mut buf))?;
         //dbg!(&buf);
-        self.socket
-            .send(buf.as_slice())
-            .expect("couldn't send message");
+        self.socket.send(buf.as_slice())?;
         Ok(())
     }
 }

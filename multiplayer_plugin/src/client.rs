@@ -7,8 +7,16 @@ pub struct MultiplayerClientPlugin;
 
 #[derive(Debug, Clone, Eq, PartialEq, Hash)]
 pub enum State {
+    Connect,
     On,
     Off,
+}
+
+pub struct ConnectInfo {
+    pub remote_addr: String,
+    pub base_addr: String,
+    pub base_local_port: usize,
+    pub port_try_amount: usize,
 }
 
 #[derive(Default)]
@@ -38,25 +46,16 @@ impl Plugin for MultiplayerClientPlugin {
         let remote_addr = "127.0.0.1:8083";
         let base_addr = "127.0.0.1:".to_string();
         let base_local_port = 34255;
-        let com: ComClient = {
-            let mut ret = None;
-            for i in 0..10 {
-                let mut addr = base_addr.to_string();
-                addr.push_str(&(base_local_port + i).to_string());
-                if let Ok(com) = ComClient::connect(&addr, remote_addr) {
-                    ret = Some(com);
-                    break;
-                }
-            }
-            ret.unwrap()
-        };
+        let com: Option<ComClient> = None;
 
-        let value = ClientMessage {
-            command: Command::MoveDirection(Vec2 { x: 0.0, y: 10.0 }),
-        };
-        com.send(&value);
         app.add_state(State::Off);
 
+        app.insert_resource(ConnectInfo {
+            remote_addr: remote_addr.to_string(),
+            base_addr,
+            base_local_port,
+            port_try_amount: 10,
+        });
         app.insert_resource(com);
         app.insert_resource(MessagesToRead::default());
         app.insert_resource(MessagesToSend::default());
@@ -65,27 +64,64 @@ impl Plugin for MultiplayerClientPlugin {
                 .with_system(receive_messages.system())
                 .with_system(send_messages.system()),
         );
+        app.add_system_set(SystemSet::on_enter(State::Connect).with_system(connect.system()));
+    }
+}
+
+fn connect(
+    mut state_network: ResMut<bevy::prelude::State<State>>,
+    connect_informations: Res<ConnectInfo>,
+    mut com: ResMut<Option<ComClient>>,
+) {
+    let c = {
+        let mut ret = None;
+        for i in 0..connect_informations.port_try_amount {
+            let mut addr = connect_informations.base_addr.to_string();
+            addr.push_str(&(connect_informations.base_local_port + i).to_string());
+            if let Ok(com) = ComClient::connect(&addr, &connect_informations.remote_addr) {
+                ret = Some(com);
+                break;
+            }
+        }
+        ret
+    };
+    if let Some(c) = c {
+        let value = ClientMessage {
+            command: Command::MoveDirection(Vec2 { x: 0.0, y: 10.0 }),
+        };
+        c.send(&value);
+        com.replace(c);
+        state_network.replace(State::On);
+    } else {
+        state_network.replace(State::Off);
     }
 }
 
 fn receive_messages(
-    mut com_to_read: ResMut<ComClient>,
+    mut com_to_read: ResMut<Option<ComClient>>,
     mut messages_to_read: ResMut<MessagesToRead>,
 ) {
-    while let Some(msg) = match com_to_read.receive() {
-        Ok(msg) => Some(msg),
-        Err(err) => {
-            //dbg!("error: {}", err);
-            return;
+    if let Some(com_to_read) = &mut *com_to_read {
+        while let Some(msg) = match com_to_read.receive() {
+            Ok(msg) => Some(msg),
+            Err(err) => {
+                //dbg!("error: {}", err);
+                return;
+            }
+        } {
+            messages_to_read.messages.push_back(msg);
         }
-    } {
-        messages_to_read.messages.push_back(msg);
     }
 }
 
-fn send_messages(mut com_to_send: ResMut<ComClient>, mut messages_to_send: ResMut<MessagesToSend>) {
-    for msg in messages_to_send.messages.iter() {
-        com_to_send.send(msg);
+fn send_messages(
+    mut com_to_send: ResMut<Option<ComClient>>,
+    mut messages_to_send: ResMut<MessagesToSend>,
+) {
+    if let Some(com_to_send) = &mut *com_to_send {
+        for msg in messages_to_send.messages.iter() {
+            com_to_send.send(msg);
+        }
+        messages_to_send.messages.clear();
     }
-    messages_to_send.messages.clear();
 }
