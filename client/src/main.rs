@@ -5,6 +5,8 @@ use shared::{ClientMessage, Command, Id};
 
 mod menu;
 
+struct FollowCamera;
+
 struct UnitMaterial {
     pub mat: Handle<ColorMaterial>,
 }
@@ -19,6 +21,7 @@ fn main() {
         .add_system(input_aim_system.system())
         .add_system(input_move_system.system())
         //.add_system(display_world.system())
+        .add_system(follow_player.system())
         .run();
 }
 fn init_assets(
@@ -32,6 +35,23 @@ fn init_assets(
     commands
         .spawn_bundle(OrthographicCameraBundle::new_2d())
         .insert(MainCamera);
+}
+
+fn follow_player(
+    mut q: QuerySet<(
+        Query<&mut Transform, With<MainCamera>>,
+        Query<&Transform, With<FollowCamera>>,
+    )>,
+) {
+    let mut target_position = None;
+    for t in q.q1().iter() {
+        target_position = Some(t.translation);
+    }
+    if let Some(target_position) = target_position {
+        for mut t in q.q0_mut().iter_mut() {
+            t.translation = target_position;
+        }
+    }
 }
 
 fn input_aim_system(
@@ -140,9 +160,8 @@ fn handle_messages(
                     "new entity {} to {};{}",
                     new_entity.id, new_entity.position.x, new_entity.position.y,
                 );
-                commands
-                    .spawn()
-                    .insert(Id(new_entity.id))
+                let mut u = commands.spawn();
+                u.insert(Id(new_entity.id))
                     .insert_bundle(SpriteBundle {
                         material: assets.mat.clone(),
                         sprite: Sprite::new(Vec2::splat(new_entity.size * 2f32)),
@@ -153,6 +172,10 @@ fn handle_messages(
                         new_entity.position.y * 32.0,
                         0.0,
                     )));
+                // FIXME: find a way to know which unity is player to follow
+                if new_entity.id == 0 {
+                    u.insert(FollowCamera);
+                }
             }
         }
     }
