@@ -48,7 +48,11 @@ fn menu_ui(
         }
     });
 }
-fn in_game(mut state: ResMut<State<AppState>>, egui_context: Res<EguiContext>) {
+fn in_game(
+    mut state: ResMut<State<AppState>>,
+    mut state_network: ResMut<State<multiplayer_plugin::client::State>>,
+    egui_context: Res<EguiContext>,
+) {
     if state.current() != &AppState::InGame {
         return;
     }
@@ -56,6 +60,7 @@ fn in_game(mut state: ResMut<State<AppState>>, egui_context: Res<EguiContext>) {
         .default_width(200.0)
         .show(egui_context.ctx(), |ui| {
             if ui.button("Leave").clicked() {
+                state_network.set(multiplayer_plugin::client::State::Off);
                 state.set(AppState::Menu).unwrap();
             }
         });

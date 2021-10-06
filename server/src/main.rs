@@ -100,6 +100,7 @@ fn handle_messages(
         if let Some(mut unit) = units.iter_mut().find(|u| u.1.client_id == c.id) {
             apply_command(&m.command, &mut unit.0, &mut unit.2.as_deref_mut());
         } else {
+            dbg!(c.id);
             let steering_manager = SteeringManager {
                 steering_target: Vec2::ZERO,
             };
