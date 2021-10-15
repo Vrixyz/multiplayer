@@ -156,10 +156,6 @@ fn handle_messages(
             }
             m.world.entities.retain(|e| !updated_units.contains(&e.id));
             for new_entity in m.world.entities {
-                println!(
-                    "new entity {} to {};{}",
-                    new_entity.id, new_entity.position.x, new_entity.position.y,
-                );
                 let mut u = commands.spawn();
                 u.insert(Id(new_entity.id))
                     .insert_bundle(SpriteBundle {

@@ -148,10 +148,6 @@ pub fn spawn_bullet<'a, 'b>(
     body.position = spawn_position.into();
     let mut ret = commands.spawn();
     ret.insert_bundle(body)
-        .insert(Transform::from_translation(spawn_position.extend(0.0)))
-        .insert(GlobalTransform::from_translation(
-            spawn_position.extend(0.0),
-        ))
         .insert_bundle(ColliderBundle {
             flags: (ActiveEvents::CONTACT_EVENTS).into(),
             position: [0.0, 0.0].into(),
@@ -159,7 +155,7 @@ pub fn spawn_bullet<'a, 'b>(
             ..Default::default()
         })
         .insert(movement::collisions::Shape { radius: 16. })
-        .insert(ColliderPositionSync::Discrete)
+        .insert(RigidBodyPositionSync::Discrete)
         .insert(ColliderDebugRender::with_id(0))
         .insert(CollisionKill)
         .insert(CollisionDef {
@@ -177,7 +173,6 @@ pub fn create_player(
     c: shared::network::udp_server::Client,
     shooter: Shooter,
 ) {
-    let transform = Transform::default();
     let unit = Unit { client_id: c.id };
 
     let mut body = RigidBodyBundle {
@@ -199,9 +194,8 @@ pub fn create_player(
             shape: ColliderShape::ball(1f32 / 2.0),
             ..Default::default()
         })
-        .insert(ColliderPositionSync::Discrete)
+        .insert(RigidBodyPositionSync::Discrete)
         .insert(Id(id_provider.new_id()))
-        .insert(transform)
         .insert(movement::collisions::Shape { radius: 32f32 })
         .insert(CollisionDef {
             behaviour: CollisionBehaviour::DieVersusKill,
